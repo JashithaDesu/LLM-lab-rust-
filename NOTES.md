@@ -55,3 +55,10 @@
 - v2_1 (prompt v2): parse_stream TIMED OUT at 7200 s (v1: ~2800 s). No partial output saved (pre-streaming harness).
   Hypotheses: repetition loop until num_predict, or very long output. Rerun as v2_1b with streaming,
   --timeout 10800 (so num_predict hits first -> 'ANSWER CUT OFF' = runaway), --keep-alive -1.
+- v2_1b started 23:45 with streaming, --timeout 10800, --keep-alive 24h; model still loaded from v2_1 -> helpers runs WARM (v2_1 helpers was cold).
+- Cold vs warm, same prompt (v2_1 vs v2_1b helpers): same 38 lines, 309 vs 307 tokens, but DIFFERENT code.
+  Cold invented APIs (&str::truncate, chars().nth_mut); warm used INI_ALLOW_INLINE_COMMENTS/PREFIXES like the C code.
+  Both push '\0' into a String (C terminator copied literally).
+  => Line/token counts are NOT evidence of identical output. Earlier "fbf_2 == fbf_3" claim must be checked by diff.
+- CONFIRMED by cmp: q7b_fbf_2 and _3 step files byte-identical (helpers, parse_stream, file_api). Both warm.
+  At temperature 0 the only variation source observed is load state (cold vs warm). Independent repeats need temperature > 0.
