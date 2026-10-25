@@ -22,3 +22,12 @@
   identical to the earlier cold run. Cold calls 3/3 -> answer A, warm calls 4/4 -> answer B.
   Output at temperature 0 depends on model load state, not on randomness.
   Implication: benchmark runs must control (or report) cold vs warm state.
+## Function-by-function (fbf), qwen2.5-coder:7b
+- q7b_fbf_1: file_api step timed out (>3600 s); prompt grows with all Rust written so far.
+- q7b_fbf_2: 455 Rust lines (vs 71-75 whole-file): logic kept, but 109 compile errors:
+  26 duplicate definitions across steps (E0428) despite "do not repeat" instruction;
+  35 undefined values/types/functions (C macros/globals never defined);
+  18 raw-pointer methods/invalid casts/derefs: char* translated literally to raw pointers;
+  4 missing lifetimes; ~23 type/argument mismatches between steps.
+- Step times (7b): helpers 8-14 min, parse_stream ~47 min, file_api 23 min, test_driver 40 min.
+- Finding: decomposition fixes OMISSION but creates INTEGRATION and TRANSLITERATION errors.
