@@ -92,19 +92,46 @@ edition = "2021"
 """
 
 
+KEEP_ALIVE = "30m"   # "-1" keeps the model loaded: no cold reload between long steps
+LIVE_FILE = None     # if set (a Path), the answer is written there token by token while it is generated
+
+
 def chat(model, messages, timeout):
+    """Streams the answer, so a long step can be watched with `tail -f` on LIVE_FILE.
+    `timeout` is the TOTAL time allowed for the call (not just the gap between tokens)."""
     body = json.dumps({
-        "model": model, "messages": messages, "stream": False,
+        "model": model, "messages": messages, "stream": True,
         "options": {"temperature": TEMPERATURE, "seed": SEED, "num_ctx": 16384, "num_predict": 8192},
-        "keep_alive": "30m",
+        "keep_alive": KEEP_ALIVE,
     }).encode()
     req = urllib.request.Request(f"{OLLAMA}/api/chat", data=body, method="POST",
                                  headers={"Content-Type": "application/json"})
     t0 = time.perf_counter()
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
-        out = json.loads(resp.read())
-    return (out["message"]["content"], out.get("prompt_eval_count", 0),
-            out.get("eval_count", 0), time.perf_counter() - t0, out.get("done_reason", ""))
+    parts, last = [], {}
+    live = open(LIVE_FILE, "w") if LIVE_FILE else None
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            for raw in resp:                      # one JSON object per line
+                if not raw.strip():
+                    continue
+                chunk = json.loads(raw)
+                if "error" in chunk:
+                    raise RuntimeError(chunk["error"])
+                piece = chunk.get("message", {}).get("content", "")
+                parts.append(piece)
+                if live:
+                    live.write(piece)
+                    live.flush()
+                if chunk.get("done"):
+                    last = chunk
+                    break
+                if time.perf_counter() - t0 > timeout:
+                    raise TimeoutError(f"timed out after {timeout}s ({len(parts)} chunks received)")
+    finally:
+        if live:
+            live.close()
+    return ("".join(parts), last.get("prompt_eval_count", 0), last.get("eval_count", 0),
+            time.perf_counter() - t0, last.get("done_reason", ""))
 
 
 def extract_rust(text):

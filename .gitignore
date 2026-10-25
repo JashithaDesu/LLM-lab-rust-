@@ -4,3 +4,4 @@ c_broken
 *.log
 c_src/inih/
 __pycache__/
+*.live

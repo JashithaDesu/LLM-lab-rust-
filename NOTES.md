@@ -50,3 +50,5 @@
 - q7b_fbf_3: identical to q7b_fbf_2 through file_api; aborted at test_driver by a reboot (21:15). q3b_fbf_1/2 never ran.
 - v2_1 helpers (cold): 38 lines (v1: 48), all 4 functions present, raw pointers 4 -> 0, libc 0.
   Input tokens 3155 vs 2537 (+24% for prelude+rules). Time 898 s (v1 cold 857 s).
+- Timing caveat: kind cluster (simple-faas) + Firefox were running during runs until 23:00 25 Oct; stopped mid v2_1 parse_stream. Step times are not a clean comparison; outputs unaffected.
+- Timing caveat: kind cluster (simple-faas) + Firefox were running during runs until 23:00 25 Oct; stopped mid v2_1 parse_stream. Step times are not a clean comparison; outputs unaffected.

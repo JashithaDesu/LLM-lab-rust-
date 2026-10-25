@@ -289,8 +289,10 @@ def main():
     ap.add_argument("--seed", type=int, default=7, help="sampling seed; use a different one per repetition")
     ap.add_argument("--temperature", type=float, default=0.0,
                     help="0 = greedy (seed has no effect); use e.g. 0.4 with different seeds for repetitions")
+    ap.add_argument("--keep-alive", default="30m",
+                    help='how long Ollama keeps the model loaded; "-1" = until the run ends (no cold reloads)')
     args = ap.parse_args()
-    H.SEED, H.TEMPERATURE = args.seed, args.temperature
+    H.SEED, H.TEMPERATURE, H.KEEP_ALIVE = args.seed, args.temperature, args.keep_alive
     variant = ("fbf" + ("-v2" if args.prompt == "v2" else "") + ("-dedup" if args.dedup else "")
                + (f"-t{args.temperature:g}" if args.temperature else "")
                + (f"-s{args.seed}" if args.seed != 7 else ""))
@@ -333,6 +335,7 @@ def main():
         prompt = STEP.format(ini_h=ini_h, rust_so_far=assemble(pieces).strip() or "(nothing yet)",
                              c_unit=c_unit, names=", ".join(names), extra=extra)
         print(f"[{args.name}] step {step}: {len(c_unit.splitlines())} C lines -> asking {args.model} ...")
+        H.LIVE_FILE = project / f"step_{step}.live"      # watch with: tail -f <this file>
         try:
             reply, t_in, t_out, secs, reason = H.chat(args.model, [{"role": "system", "content": SYSTEM},
                                                                    {"role": "user", "content": prompt}], args.timeout)
@@ -375,6 +378,7 @@ def main():
     for k in range(1, args.fix_iters + 1):
         if ok_par:
             break
+        H.LIVE_FILE = project / f"fix_{k}.live"
         messages.append({"role": "user", "content":
                          H.FIX_BUILD.format(errors="\n".join(stderr.splitlines()[:80])) if not ok_build
                          else H.FIX_PARITY.format(diff="\n".join(par_out.splitlines()[1:41]))})
