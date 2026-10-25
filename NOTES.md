@@ -47,3 +47,6 @@
 - Repetition validity: q7b_fbf_2 and _3 give identical step outputs (48/206/82 lines): temperature 0 is greedy,
   so the fixed seed has no effect and warm repeats are copies. Only the cold run (fbf_1) differed.
   Real repetitions need --temperature > 0 with different --seed values. Added both options (defaults unchanged).
+- q7b_fbf_3: identical to q7b_fbf_2 through file_api; aborted at test_driver by a reboot (21:15). q3b_fbf_1/2 never ran.
+- v2_1 helpers (cold): 38 lines (v1: 48), all 4 functions present, raw pointers 4 -> 0, libc 0.
+  Input tokens 3155 vs 2537 (+24% for prelude+rules). Time 898 s (v1 cold 857 s).
