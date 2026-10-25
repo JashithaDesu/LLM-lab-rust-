@@ -1,0 +1,20 @@
+time,name,model,mode,iteration,compiled,compile_errors,parity_ok,lines_differ,unsafe_count,external_crates,prompt_tokens,output_tokens,cum_tokens,seconds,truncated,code_lines
+2026-10-24 20:39,q3b_plain_1,qwen2.5-coder:3b,plain,1,False,16,False,,0,,4916,859,5775,1067.4,False,103
+2026-10-24 20:45,q3b_plain_1,qwen2.5-coder:3b,plain,1,False,6,False,,0,,4916,545,5461,566.7,False,77
+2026-10-24 21:05,q3b_fb_1,qwen2.5-coder:3b,feedback,1,False,6,False,,0,,4916,545,5461,302.4,False,77
+2026-10-24 21:14,q3b_fb_1,qwen2.5-coder:3b,feedback,2,False,5,False,,0,,6434,592,12487,553.6,False,85
+2026-10-24 21:25,q3b_fb_1,qwen2.5-coder:3b,feedback,3,False,5,False,,0,,7986,592,21065,657.3,False,85
+2026-10-24 21:58,q7b_plain_1,qwen2.5-coder:7b,plain,1,False,1,False,,0,,4916,463,5379,1951.1,False,71
+2026-10-24 22:10,q7b_fb_1,qwen2.5-coder:7b,feedback,1,True,0,False,94,0,,4916,529,5445,717.8,False,75
+2026-10-24 22:24,q7b_fb_1,qwen2.5-coder:7b,feedback,2,True,0,False,94,0,,5782,529,11756,871.4,False,75
+2026-10-24 22:40,q7b_fb_1,qwen2.5-coder:7b,feedback,3,True,0,False,94,0,,6647,529,18932,954.9,False,75
+2026-10-25 11:05,q3b_plain_2,qwen2.5-coder:3b,plain,1,False,16,False,,0,,4916,859,5775,953.6,False,103
+2026-10-25 11:34,q7b_plain_2,qwen2.5-coder:7b,plain,1,False,1,False,,0,,4916,463,5379,1709.5,False,71
+2026-10-25 11:39,q3b_plain_3,qwen2.5-coder:3b,plain,1,False,6,False,,0,,4916,545,5461,322.3,False,77
+2026-10-25 11:51,q7b_plain_3,qwen2.5-coder:7b,plain,1,True,0,False,94,0,,4916,529,5445,731.5,False,75
+2026-10-25 11:57,q3b_fb_2,qwen2.5-coder:3b,feedback,1,False,6,False,,0,,4916,545,5461,309.6,False,77
+2026-10-25 12:08,q3b_fb_2,qwen2.5-coder:3b,feedback,2,False,5,False,,0,,6430,592,12483,659.9,False,85
+2026-10-25 12:20,q3b_fb_2,qwen2.5-coder:3b,feedback,3,False,5,False,,0,,7978,592,21053,734.8,False,85
+2026-10-25 12:32,q7b_fb_2,qwen2.5-coder:7b,feedback,1,True,0,False,94,0,,4916,529,5445,706.5,False,75
+2026-10-25 12:46,q7b_fb_2,qwen2.5-coder:7b,feedback,2,True,0,False,94,0,,5781,529,11755,883.6,False,75
+2026-10-25 13:03,q7b_fb_2,qwen2.5-coder:7b,feedback,3,True,0,False,94,0,,6647,529,18931,994.4,False,75
