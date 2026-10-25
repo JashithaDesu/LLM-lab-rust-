@@ -39,3 +39,8 @@
 - Remaining 56: 32 E0425 (cannot find value), 12 E0308, 6 raw-pointer/cast, 6 other.
 - Takeaway: ~half of fbf build errors came from naive assembly, not from translation.
 - Note: q7b_fbf_1/2/3 and q3b_fbf_* were produced by harness_fbf v1 (not in git); v2 without --prompt/--dedup is equivalent apart from the default timeout (3600 -> 7200 s).
+- The 32 E0425 after dedup = names used without bringing their definition across from C:
+  17 C globals (User 13, Prev_section 4), 7 INI_* constants, 5 C typedefs (ini_handler, ini_reader),
+  3 C library calls (free, fgets).
+- Prompt v2 targets all four. Threat to validity: v2 partly prescribes the design (closure handler,
+  struct/local for globals), so it measures model + engineered context, not raw model ability.

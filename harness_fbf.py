@@ -80,16 +80,30 @@ const INI_MAX_SECTION: usize = 50;
 const INI_MAX_NAME: usize = 50;
 const INI_STOP_ON_FIRST_ERROR: bool = false;
 const INI_CALL_HANDLER_ON_NEW_SECTION: bool = false;
-const INI_ALLOW_NO_VALUE: bool = false;"""
+const INI_ALLOW_NO_VALUE: bool = false;
+const INI_USE_STACK: bool = true;
+const INI_ALLOW_REALLOC: bool = false;
+const INI_INITIAL_ALLOC: usize = 200;
+const INI_CUSTOM_ALLOCATOR: bool = false;"""
 
 RULES_V2 = """
 Rules for this step:
 - C strings (`char*`, `const char*`, char arrays) become `&str`, `String`, or `&[u8]` / `Vec<u8>`
   with integer indices. NEVER use raw pointers (`*const`, `*mut`) and never cast pointers with `as`.
+- No C library calls (free, malloc, fgets, strncpy, strchr, printf, ...): use Rust std instead.
+- C typedefs such as ini_handler and ini_reader do not exist in Rust. Use a closure parameter
+  (e.g. `handler: &mut dyn FnMut(&str, &str, &str) -> bool`) or define the type yourself.
+- Every name you use must be in "Already defined", in std, or defined in YOUR code.
 - The constants and functions listed under "Already defined" EXIST. Do not define them again.
-  Call them with exactly the signatures shown.
+  Call them with exactly the signatures shown.{step_rule}
 - Already defined:
 {signatures}"""
+
+STEP_RULE_V2 = {
+    "test_driver": "\n- The C globals `User` (int) and `Prev_section` (char[50]) MUST be declared in your code,\n"
+                   "  e.g. as fields of a struct or as mutable locals in main() captured by the closure.\n"
+                   "  Do not use `static mut`.",
+}
 
 ITEM_RE = re.compile(r"^\s*(?:pub(?:\([^)]*\))?\s+)?(?:(?:const|async|unsafe|extern\s+\"C\")\s+)*"
                      r"(fn|const|static(?:\s+mut)?|struct|enum|type|trait|union|mod)\s+(\w+)")
@@ -309,7 +323,7 @@ def main():
             return
         extra = EXTRA.get(step, "")
         if args.prompt == "v2":
-            extra += RULES_V2.format(signatures=signatures(pieces))
+            extra += RULES_V2.format(signatures=signatures(pieces), step_rule=STEP_RULE_V2.get(step, ""))
         prompt = STEP.format(ini_h=ini_h, rust_so_far=assemble(pieces).strip() or "(nothing yet)",
                              c_unit=c_unit, names=", ".join(names), extra=extra)
         print(f"[{args.name}] step {step}: {len(c_unit.splitlines())} C lines -> asking {args.model} ...")
