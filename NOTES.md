@@ -31,3 +31,10 @@
   4 missing lifetimes; ~23 type/argument mismatches between steps.
 - Step times (7b): helpers 8-14 min, parse_stream ~47 min, file_api 23 min, test_driver 40 min.
 - Finding: decomposition fixes OMISSION but creates INTEGRATION and TRANSLITERATION errors.
+## Deterministic dedup (reassemble.py, no model call), q7b_fbf_2
+- as-is reproduced: 109 errors, 455 lines. dedup: 56 errors, 301 lines (26 definitions removed).
+- 7b ignored "do NOT repeat" in 3/3 later steps: all 4 helpers re-written each time, constants re-declared.
+- Repeated copies were WORSE: removing them also removed 27 non-duplicate errors
+  (raw-pointer 18->6, E0308 18->12, lifetimes/indexing 8->2).
+- Remaining 56: 32 E0425 (cannot find value), 12 E0308, 6 raw-pointer/cast, 6 other.
+- Takeaway: ~half of fbf build errors came from naive assembly, not from translation.
