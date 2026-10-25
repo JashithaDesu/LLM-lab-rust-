@@ -18,3 +18,13 @@ time,name,model,mode,iteration,compiled,compile_errors,parity_ok,lines_differ,un
 2026-10-25 12:32,q7b_fb_2,qwen2.5-coder:7b,feedback,1,True,0,False,94,0,,4916,529,5445,706.5,False,75
 2026-10-25 12:46,q7b_fb_2,qwen2.5-coder:7b,feedback,2,True,0,False,94,0,,5781,529,11755,883.6,False,75
 2026-10-25 13:03,q7b_fb_2,qwen2.5-coder:7b,feedback,3,True,0,False,94,0,,6647,529,18931,994.4,False,75
+2026-10-25 13:28,q3b_cold_1,qwen2.5-coder:3b,plain,1,False,16,False,,0,,4916,859,5775,1058.1,False,103
+2026-10-25 13:44,q3b_cold_2,qwen2.5-coder:3b,plain,1,False,16,False,,0,,4916,859,5775,928.0,False,103
+2026-10-25 13:58,q7b_fbf_1,qwen2.5-coder:7b,fbf:helpers,1,,0,,,5,,2537,398,2935,857.0,False,48
+2026-10-25 14:46,q7b_fbf_1,qwen2.5-coder:7b,fbf:parse_stream,1,,0,,,35,,3891,2076,8902,2883.4,False,204
+2026-10-25 15:54,q7b_fbf_2,qwen2.5-coder:7b,fbf:helpers,1,,0,,,5,,2537,394,2931,455.7,False,48
+2026-10-25 16:40,q7b_fbf_2,qwen2.5-coder:7b,fbf:parse_stream,1,,0,,,31,,3887,2020,8838,2799.4,False,206
+2026-10-25 17:03,q7b_fbf_2,qwen2.5-coder:7b,fbf:file_api,1,,0,,,7,,4755,680,14273,1381.3,False,82
+2026-10-25 17:43,q7b_fbf_2,qwen2.5-coder:7b,fbf:test_driver,1,,0,,,8,,5711,1333,21317,2386.6,False,119
+2026-10-25 17:43,q7b_fbf_2,qwen2.5-coder:7b,fbf:assembled,0,False,109,False,,51,,0,0,21317,0,False,455
+2026-10-25 17:51,q7b_fbf_3,qwen2.5-coder:7b,fbf:helpers,1,,0,,,5,,2537,394,2931,455.0,False,48

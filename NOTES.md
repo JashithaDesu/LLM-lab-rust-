@@ -18,3 +18,7 @@
   7b = {71 lines/1 error, 75 lines/compiled}.
 - Hypothesis: first call after model load gives answer A, later calls answer B
   (fits all 11 runs). Testing with forced cold starts (q3b_cold_1/2).
+- CONFIRMED (2 forced cold starts, `ollama stop` before each): both gave 16 errors / 859 tokens,
+  identical to the earlier cold run. Cold calls 3/3 -> answer A, warm calls 4/4 -> answer B.
+  Output at temperature 0 depends on model load state, not on randomness.
+  Implication: benchmark runs must control (or report) cold vs warm state.
