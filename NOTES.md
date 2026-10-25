@@ -52,3 +52,6 @@
   Input tokens 3155 vs 2537 (+24% for prelude+rules). Time 898 s (v1 cold 857 s).
 - Timing caveat: kind cluster (simple-faas) + Firefox were running during runs until 23:00 25 Oct; stopped mid v2_1 parse_stream. Step times are not a clean comparison; outputs unaffected.
 - Timing caveat: kind cluster (simple-faas) + Firefox were running during runs until 23:00 25 Oct; stopped mid v2_1 parse_stream. Step times are not a clean comparison; outputs unaffected.
+- v2_1 (prompt v2): parse_stream TIMED OUT at 7200 s (v1: ~2800 s). No partial output saved (pre-streaming harness).
+  Hypotheses: repetition loop until num_predict, or very long output. Rerun as v2_1b with streaming,
+  --timeout 10800 (so num_predict hits first -> 'ANSWER CUT OFF' = runaway), --keep-alive -1.
