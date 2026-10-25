@@ -3,3 +3,4 @@ c_ref
 c_broken
 *.log
 c_src/inih/
+__pycache__/

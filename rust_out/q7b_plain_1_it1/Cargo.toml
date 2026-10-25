@@ -1,0 +1,6 @@
+[package]
+name = "q7b_plain_1_it1"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]

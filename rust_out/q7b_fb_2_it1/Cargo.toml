@@ -1,0 +1,6 @@
+[package]
+name = "q7b_fb_2_it1"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
