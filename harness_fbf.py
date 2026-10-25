@@ -286,8 +286,14 @@ def main():
                     help="v2 = harness-defined constants + no-raw-pointer rule + existing signatures")
     ap.add_argument("--dedup", action="store_true",
                     help="drop duplicate top-level definitions before building")
+    ap.add_argument("--seed", type=int, default=7, help="sampling seed; use a different one per repetition")
+    ap.add_argument("--temperature", type=float, default=0.0,
+                    help="0 = greedy (seed has no effect); use e.g. 0.4 with different seeds for repetitions")
     args = ap.parse_args()
-    variant = "fbf" + ("-v2" if args.prompt == "v2" else "") + ("-dedup" if args.dedup else "")
+    H.SEED, H.TEMPERATURE = args.seed, args.temperature
+    variant = ("fbf" + ("-v2" if args.prompt == "v2" else "") + ("-dedup" if args.dedup else "")
+               + (f"-t{args.temperature:g}" if args.temperature else "")
+               + (f"-s{args.seed}" if args.seed != 7 else ""))
     sys.stdout.reconfigure(line_buffering=True)
 
     ini_h = (H.INIH / "ini.h").read_text()

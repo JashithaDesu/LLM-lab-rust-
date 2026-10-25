@@ -44,3 +44,6 @@
   3 C library calls (free, fgets).
 - Prompt v2 targets all four. Threat to validity: v2 partly prescribes the design (closure handler,
   struct/local for globals), so it measures model + engineered context, not raw model ability.
+- Repetition validity: q7b_fbf_2 and _3 give identical step outputs (48/206/82 lines): temperature 0 is greedy,
+  so the fixed seed has no effect and warm repeats are copies. Only the cold run (fbf_1) differed.
+  Real repetitions need --temperature > 0 with different --seed values. Added both options (defaults unchanged).

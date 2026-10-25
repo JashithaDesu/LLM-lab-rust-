@@ -38,6 +38,8 @@ BASELINE = INIH / "tests" / "baseline_multi.txt"
 OUT_DIR = ROOT / "rust_out"
 RESULTS = ROOT / "results.csv"
 OLLAMA = os.environ.get("OLLAMA_HOST", "http://localhost:11434").rstrip("/")
+TEMPERATURE = 0.0  # 0 = greedy: the seed has no effect. Use >0 (e.g. 0.4) for real repetitions.
+SEED = 7          # temperature 0 + fixed seed: same warm model -> same answer. Vary for repetitions.
 
 SYSTEM = (
     "You are an expert C and Rust engineer migrating legacy C code to safe, idiomatic Rust. "
@@ -93,7 +95,7 @@ edition = "2021"
 def chat(model, messages, timeout):
     body = json.dumps({
         "model": model, "messages": messages, "stream": False,
-        "options": {"temperature": 0, "seed": 7, "num_ctx": 16384, "num_predict": 8192},
+        "options": {"temperature": TEMPERATURE, "seed": SEED, "num_ctx": 16384, "num_predict": 8192},
         "keep_alive": "30m",
     }).encode()
     req = urllib.request.Request(f"{OLLAMA}/api/chat", data=body, method="POST",
@@ -154,7 +156,11 @@ def main():
     ap.add_argument("--name", required=True, help="attempt name, e.g. q7b_plain_1")
     ap.add_argument("--max-iters", type=int, default=3)
     ap.add_argument("--timeout", type=int, default=3600, help="seconds per model call")
+    ap.add_argument("--seed", type=int, default=7, help="sampling seed; use a different one per repetition")
+    ap.add_argument("--temperature", type=float, default=0.0)
     args = ap.parse_args()
+    global SEED, TEMPERATURE
+    SEED, TEMPERATURE = args.seed, args.temperature
     sys.stdout.reconfigure(line_buffering=True)
 
     src = {k: (INIH / p).read_text() for k, p in
@@ -189,7 +195,7 @@ def main():
 
         row = {
             "time": time.strftime("%Y-%m-%d %H:%M"), "name": args.name, "model": args.model,
-            "mode": args.mode, "iteration": it, "compiled": ok_build, "compile_errors": len(errors),
+            "mode": args.mode + (f"-t{args.temperature:g}" if args.temperature else "") + (f"-s{args.seed}" if args.seed != 7 else ""), "iteration": it, "compiled": ok_build, "compile_errors": len(errors),
             "parity_ok": ok_parity, "lines_differ": n_diff if ok_build else "",
             "unsafe_count": unsafe_n, "external_crates": " ".join(crates),
             "prompt_tokens": t_in, "output_tokens": t_out, "cum_tokens": tot_in + tot_out,
