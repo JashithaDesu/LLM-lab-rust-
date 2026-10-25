@@ -38,3 +38,4 @@
   (raw-pointer 18->6, E0308 18->12, lifetimes/indexing 8->2).
 - Remaining 56: 32 E0425 (cannot find value), 12 E0308, 6 raw-pointer/cast, 6 other.
 - Takeaway: ~half of fbf build errors came from naive assembly, not from translation.
+- Note: q7b_fbf_1/2/3 and q3b_fbf_* were produced by harness_fbf v1 (not in git); v2 without --prompt/--dedup is equivalent apart from the default timeout (3600 -> 7200 s).
