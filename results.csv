@@ -44,3 +44,7 @@ time,name,model,mode,iteration,compiled,compile_errors,parity_ok,lines_differ,un
 2026-10-26 11:09,q7b_fbf_v2_2,qwen2.5-coder:7b,fbf-v2-dedup-mu:fix,1,False,28,False,,0,,5018,2012,25655,4220.8,False,253
 2026-10-26 12:21,q7b_fbf_v2_2,qwen2.5-coder:7b,fbf-v2-dedup-mu:fix,2,False,28,False,,0,,8129,2012,35796,4354.6,False,253
 2026-10-26 12:29,q7b_fbf_v3_1,qwen2.5-coder:7b,fbf-v3-dedup-mu:helpers,1,,0,,,0,,3311,225,3536,435.0,False,21
+2026-10-26 16:15,q7b_fbf_v3_1,qwen2.5-coder:7b,fbf-v3-dedup-mu:parse_stream,1,,0,,,0,,4812,658,9006,1429.0,False,78
+2026-10-26 16:25,q7b_fbf_v3_1,qwen2.5-coder:7b,fbf-v3-dedup-mu:file_api,1,,0,,,0,,4044,138,13188,583.3,False,13
+2026-10-26 16:43,q7b_fbf_v3_1,qwen2.5-coder:7b,fbf-v3-dedup-mu:test_driver,1,,0,,,0,,4710,359,18257,1074.4,False,50
+2026-10-26 16:43,q7b_fbf_v3_1,qwen2.5-coder:7b,fbf-v3-dedup-mu:assembled,0,False,9,False,,0,,0,0,18257,0,False,185

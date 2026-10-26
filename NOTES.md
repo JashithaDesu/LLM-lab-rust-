@@ -95,3 +95,6 @@
 - v2_2 fix 2: IDENTICAL CODE RETURNED (28 errors, 4355 s, 2012 output tokens wasted).
   Fix loop total: 30 -> 28 for 4024 output tokens / ~2.4 h. Run total 35,796 tokens.
   Workflow rule suggested: stop feedback loop when a round returns identical code or no error reduction.
+- v3_1: helpers + parse_stream signatures match the contract exactly (no user param, returns i32).
+- v3_1 assembled: 9 errors / 185 lines (v2: 30 / 254). Argument-count errors 10 -> 1, E0277 7 -> 1.
+  Remaining: 4 E0425, 2 E0308, 1 E0277, 1 E0599, 1 E0061. Fix loop running.
