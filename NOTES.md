@@ -92,3 +92,6 @@
 - v2_2 fix 1 removed ONLY the 2 E0106 (missing lifetime); all 10 argument-count errors (E0061/E0057/E0593),
   7 E0277 and 6 E0308 unchanged. Compiler feedback repairs local errors, not cross-step interface mismatches
   (the message does not say which side - caller or callee - is wrong). Motivation for v3 interface contract.
+- v2_2 fix 2: IDENTICAL CODE RETURNED (28 errors, 4355 s, 2012 output tokens wasted).
+  Fix loop total: 30 -> 28 for 4024 output tokens / ~2.4 h. Run total 35,796 tokens.
+  Workflow rule suggested: stop feedback loop when a round returns identical code or no error reduction.
