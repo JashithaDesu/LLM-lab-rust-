@@ -89,3 +89,6 @@
   file_api differs (142 vs 147 tokens) and ran 143 s vs 651 s = prompt-cache hit (Ollama log: f_keep 0.655).
   test_driver then differs too (no static mut: E0133 3 -> 0).
   => temp-0 output depends on prompt-cache state; cold vs warm is one case of this.
+- v2_2 fix 1 removed ONLY the 2 E0106 (missing lifetime); all 10 argument-count errors (E0061/E0057/E0593),
+  7 E0277 and 6 E0308 unchanged. Compiler feedback repairs local errors, not cross-step interface mismatches
+  (the message does not say which side - caller or callee - is wrong). Motivation for v3 interface contract.
