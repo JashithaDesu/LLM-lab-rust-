@@ -80,3 +80,8 @@
   Threat: v3 measures model + human-written spec, not autonomous migration.
 - Side finding: a line of exactly 199 chars + newline is an error in C but not in contract_ref; baseline still
   matches -> inih tests do not cover this boundary.
+- CORRECTION: v2_1b did NOT drop multi-line values. Its parse_stream implements the continuation logic
+  (prev_name non-empty + leading whitespace) without using the word "multiline"; the keyword grep (3 -> 0)
+  measured vocabulary, not behaviour. Only output parity tests behaviour.
+- Prediction confirmed: v2_2 steps byte-identical to v2_1b (helpers, parse_stream). Warm temp-0 repeats identical again.
+- Ollama log shows llama.cpp prompt-cache reuse between calls (lcp / f_keep lines), e.g. file_api 143 s vs 651 s.
