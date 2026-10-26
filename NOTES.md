@@ -85,3 +85,7 @@
   measured vocabulary, not behaviour. Only output parity tests behaviour.
 - Prediction confirmed: v2_2 steps byte-identical to v2_1b (helpers, parse_stream). Warm temp-0 repeats identical again.
 - Ollama log shows llama.cpp prompt-cache reuse between calls (lcp / f_keep lines), e.g. file_api 143 s vs 651 s.
+- v2_2 assembled: 30 errors / 254 lines (prediction from v2_1b: 31). Steps identical up to parse_stream;
+  file_api differs (142 vs 147 tokens) and ran 143 s vs 651 s = prompt-cache hit (Ollama log: f_keep 0.655).
+  test_driver then differs too (no static mut: E0133 3 -> 0).
+  => temp-0 output depends on prompt-cache state; cold vs warm is one case of this.
