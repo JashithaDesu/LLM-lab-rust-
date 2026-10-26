@@ -105,6 +105,65 @@ STEP_RULE_V2 = {
                    "  Do not use `static mut`.",
 }
 
+# --- prompt v3: interface-first + behaviour checklist ---------------------------------
+# Targets what v2 left: (a) argument-count/type mismatches between steps (each step invented
+# its own signature) and (b) dropped features (multi-line values, User starting at 0).
+# HAND-WRITTEN from ini.c / unittest.c with default settings. Threat to validity: this is a
+# human-made contract, so v3 measures "model + specification", not raw translation ability.
+HANDLER_T = "&mut dyn FnMut(&str, &str, &str) -> bool"   # (section, name, value) -> keep going?
+CONTRACT_V3 = {
+    "helpers": f"""
+Implement EXACTLY these signatures (no extra parameters, no other return types):
+  fn ini_rstrip(s: &str) -> &str                      // strip trailing whitespace
+  fn ini_lskip(s: &str) -> &str                       // skip leading whitespace
+  fn ini_find_chars_or_comment(s: &str, chars: Option<&str>) -> usize
+      // byte index of the first char that is in `chars` (when Some), or of an inline comment
+      // prefix (INI_INLINE_COMMENT_PREFIXES) that comes right after a whitespace char; s.len() if none
+  fn ini_strncpy0(src: &str, size: usize) -> String   // at most size-1 chars of src, no NUL char
+""",
+    "parse_stream": f"""
+Implement EXACTLY this signature:
+  fn ini_parse_stream<R: std::io::BufRead>(reader: R, handler: {HANDLER_T}) -> i32
+Behaviour checklist (DEFAULT settings), every item must be implemented:
+  1. Read line by line, counting line numbers from 1. A line longer than INI_MAX_LINE - 1 bytes:
+     keep its first INI_MAX_LINE - 1 bytes, discard the rest, record an error at that line.
+  2. Line 1 only: skip a UTF-8 BOM (bytes EF BB BF).
+  3. Strip leading and trailing whitespace.
+  4. Empty line -> skip. Line starting with a char of INI_START_COMMENT_PREFIXES -> comment, skip.
+  5. MULTI-LINE VALUES: if a previous name exists, the stripped line is not empty, and the ORIGINAL
+     line started with whitespace -> continuation: cut at an inline comment, right-strip, and call
+     handler(section, prev_name, line).
+  6. Line starting with '[' -> section header: find ']' with ini_find_chars_or_comment. Found ->
+     section = ini_strncpy0(text between, INI_MAX_SECTION), clear prev_name. Not found -> error.
+  7. Otherwise find the first '=' or ':' with ini_find_chars_or_comment. Found -> name = text before it,
+     right-stripped; value = text after it, cut at an inline comment, stripped both sides;
+     prev_name = ini_strncpy0(name, INI_MAX_NAME); call handler(section, name, value).
+     Not found -> error.
+  8. handler returning false -> error at that line.
+  9. Keep only the FIRST error line number and continue parsing (INI_STOP_ON_FIRST_ERROR is false).
+ 10. Return 0, or the line number of the first error.
+""",
+    "file_api": f"""
+Implement EXACTLY these signatures, both calling ini_parse_stream:
+  fn ini_parse_file(file: std::fs::File, handler: {HANDLER_T}) -> i32
+  fn ini_parse(filename: &str, handler: {HANDLER_T}) -> i32   // -1 if the file cannot be opened
+""",
+    "test_driver": f"""
+Write fn main() and whatever helpers it needs. Handlers are closures of type {HANDLER_T}.
+Behaviour checklist (from unittest.c), every item must be implemented:
+  1. `user_shown` (C global User) starts at 0; `u` (C static in parse) starts at 100.
+  2. For each file, in this exact order: no_file.ini, normal.ini, bad_section.ini, bad_comment.ini,
+     user_error.ini, multi_line.ini, bad_multi.ini, bom.ini, duplicate_sections.ini, no_value.ini,
+     long_section.ini, long_line.ini, name_only_after_error.ini:
+       reset prev_section to ""; e = ini_parse(file, handler); print "{{file}}: e={{e}} user={{user_shown}}"; u += 1.
+  3. The handler (C dumper): set user_shown = u; if section != prev_section, print "... [{{section}}]"
+     and set prev_section = ini_strncpy0(section, 50); print "... {{name}}={{value}};";
+     return false if name == "user" and value == "parse_error", else true.
+  4. Keep this state in mutable locals in main() captured by the closure. NO static or global variables.
+""",
+}
+
+
 ITEM_RE = re.compile(r"^\s*(?:pub(?:\([^)]*\))?\s+)?(?:(?:const|async|unsafe|extern\s+\"C\")\s+)*"
                      r"(fn|const|static(?:\s+mut)?|struct|enum|type|trait|union|mod)\s+(\w+)")
 
@@ -328,7 +387,7 @@ def main():
     ap.add_argument("--name", required=True)
     ap.add_argument("--fix-iters", type=int, default=0, help="feedback rounds on the assembled program")
     ap.add_argument("--timeout", type=int, default=7200, help="seconds per model call")
-    ap.add_argument("--prompt", choices=["v1", "v2"], default="v1",
+    ap.add_argument("--prompt", choices=["v1", "v2", "v3"], default="v1",
                     help="v2 = harness-defined constants + no-raw-pointer rule + existing signatures")
     ap.add_argument("--dedup", action="store_true",
                     help="drop duplicate top-level definitions before building")
@@ -341,7 +400,7 @@ def main():
                     help='how long Ollama keeps the model loaded; "-1" = until the run ends (no cold reloads)')
     args = ap.parse_args()
     H.SEED, H.TEMPERATURE, H.KEEP_ALIVE = args.seed, args.temperature, args.keep_alive
-    variant = ("fbf" + ("-v2" if args.prompt == "v2" else "") + ("-dedup" if args.dedup else "")
+    variant = ("fbf" + ("" if args.prompt == "v1" else f"-{args.prompt}") + ("-dedup" if args.dedup else "")
                + ("-mu" if args.merge_uses else "")
                + (f"-t{args.temperature:g}" if args.temperature else "")
                + (f"-s{args.seed}" if args.seed != 7 else ""))
@@ -353,7 +412,7 @@ def main():
     crate = re.sub(r"[^a-z0-9_]", "_", args.name.lower())
     (project / "Cargo.toml").write_text(H.CARGO_TOML.format(name=crate))
     pieces, tot_in, tot_out = [], 0, 0              # pieces = [(step, rust code)]
-    if args.prompt == "v2":
+    if args.prompt in ("v2", "v3"):
         pieces.append(("prelude", PRELUDE_V2))
 
     def record(step, it, ok_build, errors, ok_par, n_diff, code, t_in, t_out, secs, reason):
@@ -379,8 +438,11 @@ def main():
             print(f"[{args.name}] could not find {names} in {src_file}; aborting")
             return
         extra = EXTRA.get(step, "")
-        if args.prompt == "v2":
-            extra += RULES_V2.format(signatures=signatures(pieces), step_rule=STEP_RULE_V2.get(step, ""))
+        if args.prompt in ("v2", "v3"):
+            rule = STEP_RULE_V2.get(step, "") if args.prompt == "v2" else ""
+            extra += RULES_V2.format(signatures=signatures(pieces), step_rule=rule)
+        if args.prompt == "v3":
+            extra += CONTRACT_V3[step]
         prompt = STEP.format(ini_h=ini_h, rust_so_far=assemble(pieces).strip() or "(nothing yet)",
                              c_unit=c_unit, names=", ".join(names), extra=extra)
         print(f"[{args.name}] step {step}: {len(c_unit.splitlines())} C lines -> asking {args.model} ...")

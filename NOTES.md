@@ -75,3 +75,8 @@
 - Chain: v1 109 -> dedup 56 -> v2 prompt 37 -> merge-uses 31. Of the 78 removed errors, 59 came from
   deterministic tool fixes, not from the model.
 - Prediction for q7b_fbf_v2_2 (warm, temp 0, same prompt): steps byte-identical to v2_1b -> assembled = 31 errors.
+- v3 = v2 + interface-first contract (fixed Rust signatures) + behaviour checklist per step, hand-written from
+  ini.c/unittest.c. Validated: contract_ref (implements ONLY the contract, written with AI help) -> PARITY OK 81/81.
+  Threat: v3 measures model + human-written spec, not autonomous migration.
+- Side finding: a line of exactly 199 chars + newline is an error in C but not in contract_ref; baseline still
+  matches -> inih tests do not cover this boundary.
