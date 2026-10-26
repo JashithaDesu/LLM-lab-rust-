@@ -62,3 +62,11 @@
   => Line/token counts are NOT evidence of identical output. Earlier "fbf_2 == fbf_3" claim must be checked by diff.
 - CONFIRMED by cmp: q7b_fbf_2 and _3 step files byte-identical (helpers, parse_stream, file_api). Both warm.
   At temperature 0 the only variation source observed is load state (cold vs warm). Independent repeats need temperature > 0.
+## v2_1b (prompt v2 + dedup, warm, streaming, keep-alive 24h) - 26 Oct
+- Assembled: 37 errors, 254 lines (v1: 109/455; v1+dedup: 56/301). Errors per 100 lines 24 -> 19 -> 15.
+- v2 fixed: duplicate definitions 26 -> 0 (signature list worked where "do not repeat" failed),
+  undefined names 32 -> 1, raw-pointer/cast errors 17 -> 0.
+- Remaining: 10 argument-count mismatches (parse_stream takes `user` as a second closure), 6 import clashes
+  (E0252, assemble() only dedups identical use lines), 3 static mut despite explicit rule, 18 types/traits/lifetimes.
+- CAUTION: code shrank (parse_stream 206 -> 119, file_api 82 -> 15, test_driver 119 -> 56): check for dropped logic.
+- parse_stream 1925 s warm vs >7200 s timeout cold (v2_1), but v2_1 also had kind cluster load: not a clean comparison.
