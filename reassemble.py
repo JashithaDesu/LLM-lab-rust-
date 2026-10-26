@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
 """Re-assemble a finished fbf run from its saved step_*.md files, WITHOUT calling the model.
 
-Builds the run twice into rust_out/<run>_reasm/ and prints the compiler-error profile:
+Builds the run three ways into rust_out/<run>_reasm/ and prints the compiler-error profile:
   1. as-is      (same assembly as the original run -> should reproduce its error count)
   2. --dedup    (duplicate top-level definitions removed, owner step wins)
-The difference is the effect of the deterministic de-duplication alone.
+  3. --dedup + --merge-uses (all `use` imports expanded, de-duplicated, hoisted)
 
 Usage
   python3 reassemble.py q7b_fbf_2
+  python3 reassemble.py <run> --v2     (force the v2 prelude if results.csv has no row for the run)
 """
 
+import csv
 import re
 import shutil
 import sys
@@ -19,9 +21,13 @@ import harness_fbf as F
 
 
 def main():
-    run = sys.argv[1]
+    run = [a for a in sys.argv[1:] if not a.startswith('--')][0]
     src = H.OUT_DIR / run
-    pieces = []
+    # v2 runs start with the harness-defined constants block; detect from results.csv (mode "fbf-v2...")
+    rows = list(csv.DictReader(open(H.RESULTS))) if H.RESULTS.exists() else []
+    v2 = any(r["name"] == run and r["mode"].startswith("fbf-v2") for r in rows) or "--v2" in sys.argv
+    pieces = [("prelude", F.PRELUDE_V2)] if v2 else []
+    print(f"[{run}] prompt {'v2 (prelude included)' if v2 else 'v1'}")
     for step, _, _ in F.UNITS:
         md = src / f"step_{step}.md"
         if not md.exists():
@@ -34,10 +40,11 @@ def main():
     (project / "Cargo.toml").write_text(H.CARGO_TOML.format(name=crate))
 
     deduped, removed = F.dedup(pieces)
-    for label, ps in (("as-is", pieces), ("dedup", deduped)):
-        code = F.assemble(ps)
+    for label, ps, mu in (("as-is", pieces, False), ("dedup", deduped, False),
+                          ("dedup+merge-uses", deduped, True)):
+        code = F.assemble(ps, merge_uses=mu)
         (project / "src" / "main.rs").write_text(code)
-        shutil.copy(project / "src" / "main.rs", project / f"main_{label}.rs")
+        shutil.copy(project / "src" / "main.rs", project / f"main_{label.replace('+', '_')}.rs")
         ok, errors, stderr = H.build(project)
         status = f"build failed, {len(errors)} errors" if not ok else "BUILT"
         if ok:

@@ -70,3 +70,8 @@
   (E0252, assemble() only dedups identical use lines), 3 static mut despite explicit rule, 18 types/traits/lifetimes.
 - CAUTION: code shrank (parse_stream 206 -> 119, file_api 82 -> 15, test_driver 119 -> 56): check for dropped logic.
 - parse_stream 1925 s warm vs >7200 s timeout cold (v2_1), but v2_1 also had kind cluster load: not a clean comparison.
+- reassemble (fixed to include v2 prelude) reproduces v2_1b exactly: 37 errors / 254 lines.
+  + merge-uses (all `use` imports expanded, de-duplicated): 37 -> 31, E0252 6 -> 0.
+- Chain: v1 109 -> dedup 56 -> v2 prompt 37 -> merge-uses 31. Of the 78 removed errors, 59 came from
+  deterministic tool fixes, not from the model.
+- Prediction for q7b_fbf_v2_2 (warm, temp 0, same prompt): steps byte-identical to v2_1b -> assembled = 31 errors.

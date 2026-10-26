@@ -139,8 +139,10 @@ def split_items(code):
         elif c in ")]}":
             depth -= 1
             if depth == 0 and c == "}":
-                items.append(code[start:i + 1])
-                start = i + 1
+                rest = code[i + 1:].lstrip()
+                if not rest.startswith(";"):          # `use a::{b};` / `static S: T = T {..};` end at the ';'
+                    items.append(code[start:i + 1])
+                    start = i + 1
         elif c == ";" and depth == 0:
             items.append(code[start:i + 1])
             start = i + 1
@@ -247,9 +249,53 @@ def error_summary(stderr):
                      sorted(counts.items(), key=lambda kv: -kv[1][0]))
 
 
-def assemble(pieces):
-    """Join the step outputs [(step, code)] into one file. Single-line `use` statements are
-    hoisted and de-duplicated (each step may repeat the same imports); everything else is kept."""
+def expand_use(tree):
+    """'std::io::{self, BufRead, Read}' -> ['std::io', 'std::io::BufRead', 'std::io::Read']."""
+    tree = "".join(re.sub(r"\s+as\s+", "\0", tree).split()).replace("\0", " as ")
+    if "{" not in tree:
+        return [tree]
+    i = tree.index("{")
+    base, inner = tree[:i].rstrip(":"), tree[i + 1:tree.rindex("}")]
+    parts, depth, cur = [], 0, ""
+    for ch in inner:                       # split on top-level commas only
+        if ch == "," and depth == 0:
+            parts.append(cur)
+            cur = ""
+            continue
+        depth += (ch == "{") - (ch == "}")
+        cur += ch
+    parts.append(cur)
+    out = []
+    for part in filter(None, parts):
+        if part == "self":
+            out.append(base)
+        else:
+            out.extend(expand_use(f"{base}::{part}" if base else part))
+    return out
+
+
+def assemble(pieces, merge_uses=False):
+    """Join the step outputs [(step, code)] into one file.
+    Default (v1 behaviour, kept for comparability): single-line `use` statements without braces
+    are hoisted and de-duplicated; everything else is kept as written.
+    merge_uses=True: EVERY top-level `use` (including `use a::{b, c};`) is expanded into single
+    paths, de-duplicated and hoisted, so steps importing the same name no longer clash (E0252)."""
+    if merge_uses:
+        paths, bodies = [], []
+        for step, piece in pieces:
+            kept = []
+            for it in split_items(piece):
+                code = "\n".join(ln for ln in it.splitlines() if not ln.strip().startswith("//")).strip()
+                m = re.match(r"^use\s+(.+);$", code, re.S)
+                if m:
+                    for path in expand_use(m.group(1)):
+                        if path not in paths:
+                            paths.append(path)
+                else:
+                    kept.append(it)
+            bodies.append(f"// ===== step: {step} =====\n" + "".join(kept).strip())
+        return "".join(f"use {p};\n" for p in paths) + "\n" + "\n\n".join(bodies) + "\n"
+
     uses, bodies = [], []
     for step, piece in pieces:
         piece = f"// ===== step: {step} =====\n{piece}"
@@ -286,6 +332,8 @@ def main():
                     help="v2 = harness-defined constants + no-raw-pointer rule + existing signatures")
     ap.add_argument("--dedup", action="store_true",
                     help="drop duplicate top-level definitions before building")
+    ap.add_argument("--merge-uses", action="store_true",
+                    help="merge all `use` imports (incl. brace forms) into one de-duplicated block")
     ap.add_argument("--seed", type=int, default=7, help="sampling seed; use a different one per repetition")
     ap.add_argument("--temperature", type=float, default=0.0,
                     help="0 = greedy (seed has no effect); use e.g. 0.4 with different seeds for repetitions")
@@ -294,6 +342,7 @@ def main():
     args = ap.parse_args()
     H.SEED, H.TEMPERATURE, H.KEEP_ALIVE = args.seed, args.temperature, args.keep_alive
     variant = ("fbf" + ("-v2" if args.prompt == "v2" else "") + ("-dedup" if args.dedup else "")
+               + ("-mu" if args.merge_uses else "")
                + (f"-t{args.temperature:g}" if args.temperature else "")
                + (f"-s{args.seed}" if args.seed != 7 else ""))
     sys.stdout.reconfigure(line_buffering=True)
@@ -365,7 +414,7 @@ def main():
     if args.dedup:
         pieces, removed = dedup(pieces)
         print(f"[{args.name}] dedup removed {len(removed)} duplicate definitions: {', '.join(removed) or '-'}")
-    code = assemble(pieces)
+    code = assemble(pieces, merge_uses=args.merge_uses)
     ok_build, errors, stderr, ok_par, n_diff, par_out, status = evaluate(code)
     record("assembled", 0, ok_build, errors, ok_par, n_diff, code, 0, 0, 0, "")
     print(f"[{args.name}] assembled: {status} | {code.count(chr(10))} Rust lines")
